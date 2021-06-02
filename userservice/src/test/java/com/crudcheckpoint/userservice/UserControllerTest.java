@@ -3,7 +3,7 @@ package com.crudcheckpoint.userservice;
 import com.crudcheckpoint.userservice.bean.User;
 import com.crudcheckpoint.userservice.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,15 +30,14 @@ public class UserControllerTest {
     @Autowired
     UserRepository userRepository;
 
-    @BeforeClass
+    @BeforeEach
     public void mockDatabase(){
         System.out.println("Create dummy database");
         this.userRepository.save(new User(1, "john@example.com", "something-secret"));
         this.userRepository.save(new User(2, "eliza@example.com", "something-secret"));
     }
+
     @Test
-    @Transactional
-    @Rollback
     public void testGetUsers() throws Exception {
         RequestBuilder request = get("/users");
         this.mvc.perform(request)
@@ -50,9 +49,9 @@ public class UserControllerTest {
     }
 
     @Test
-    @Transactional
-    @Rollback
+
     public void testGetUserById() throws Exception {
+
         RequestBuilder request = get("/users/{id}", 1);
         this.mvc.perform(request)
                 .andExpect(status().isOk())
@@ -91,6 +90,7 @@ public class UserControllerTest {
     @Transactional
     @Rollback
     public void testUpdateUser() throws Exception {
+
         User user =  new User();
         user.setEmail("matt@example.com");
         ObjectMapper mapper = new ObjectMapper();
@@ -119,30 +119,30 @@ public class UserControllerTest {
     }
 
     @Test
-    @Transactional
-    @Rollback
     public void testAuthenticateUser() throws Exception {
-        User user =  new User();
-        user.setEmail("john@example.com");
-        user.setPassword("something-secret");
-        ObjectMapper mapper = new ObjectMapper();
+
+        String user = "{\n" +
+                "    \"email\": \"john@example.com\",\n" +
+                "    \"password\": \"something-secret\"\n" +
+                "}";
 
         RequestBuilder request = post("/users/authenticate")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(mapper.writeValueAsString(user));
+                .content(user);
         this.mvc.perform(request)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated", is(true)))
                 .andExpect(jsonPath("$.user.id", is(1)))
                 .andExpect(jsonPath("$.user.email", is("john@example.com")));
 
-        User user2 =  new User();
-        user2.setEmail("john@example.com");
-        user2.setPassword("123456");
 
+        user = "{\n" +
+                "    \"email\": \"john@example.com\",\n" +
+                "    \"password\": \"abc\"\n" +
+                "}";
         request = post("/users/authenticate")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(mapper.writeValueAsString(user2));
+                .content(user);
 
         this.mvc.perform(request)
                 .andExpect(status().isOk())
