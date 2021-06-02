@@ -29,7 +29,7 @@ public class UserController {
     }
     @GetMapping("/users/{id}")
     public User getUser(@PathVariable Integer id){
-        return this.userRepo.findById(id).get();
+        return this.userRepo.findById(id).orElse(new User());
     }
 
     @PatchMapping("/users/{id}")
@@ -47,7 +47,7 @@ public class UserController {
     }
     @DeleteMapping("/users/{id}")
     public DeleteUserResponse createUsers(@PathVariable Integer id){
-        this.userRepo.deleteById(id);
+        if(this.userRepo.findById(id).isPresent())  this.userRepo.deleteById(id);
         DeleteUserResponse response = new DeleteUserResponse();
         response.setCount(this.userRepo.count());
         return response;
